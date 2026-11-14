@@ -452,7 +452,7 @@ GARCH while maintaining the same approximate
 monthly forecasting horizon as the historical
 estimator.
 
-Both volatility forecasts are computed using
+The historical and GARCH volatility forecasts are computed using
 information available at the end of month $t$.
 Their corresponding exposure multipliers are
 applied to the momentum return realized during
@@ -523,7 +523,7 @@ observations within each evaluation period.
 
 \subsection{Performance Evaluation}
 
-We evaluate unmanaged momentum and both
+We evaluate unmanaged momentum and all three
 volatility-managed strategies using annualized
 mean returns, annualized volatility, Sharpe
 ratios, maximum drawdowns, and average exposure.
@@ -553,17 +553,12 @@ SR
 using a zero risk-free rate for consistency
 across strategies.
 
-All reported strategy returns are gross
-of transaction costs, financing expenses,
-and short-selling costs. Consequently,
-the results should be interpreted as
-theoretical strategy performance rather
-than directly investable net returns.
+The baseline performance comparisons reported in Sections 4.1--4.6 are gross of transaction costs, financing expenses, and short-selling costs. These results characterize the theoretical performance of the volatility-management rules before implementation frictions. Sections 4.7--4.9 extend the analysis to stock-level transaction costs, leverage constraints, financing charges, and statistical inference on net strategy returns. Short-borrow fees and other unmodeled implementation costs remain excluded.
 
 
 \subsection{Volatility Forecast Evaluation}
 
-To evaluate the predictive accuracy of the two volatility
+To evaluate the predictive accuracy of the three volatility
 estimators, we compare their forecasts with the realized
 volatility of the momentum portfolio during the subsequent
 calendar month.
@@ -725,6 +720,8 @@ For leverage sensitivity, we replace the unconstrained exposure $L_t$ with $L_t^
  F_t=\frac{f}{10{,}000\times12}\max\left(L_t^{(K)}-1,0\right).
  \label{eq:financing}
 \end{equation}
+The exposure multiplier scales the dollar-neutral WML portfolio rather than measuring gross absolute stock exposure. Because the underlying portfolio holds a long and a short decile, a multiplier of one corresponds to approximately two units of gross absolute stock exposure per unit of NAV. The financing convention charges only for the portion of the WML multiplier exceeding one; it does not model actual margin borrowing, short-sale proceeds, or security-borrowing expenses.
+
 For gross portfolio return $R_t^{\mathrm{gross}}=\sum_iq_{i,t}r_{i,t}$, the modeled net account return is
 \begin{equation}
  R_t^{\mathrm{net}}=x_t\left(1+R_t^{\mathrm{gross}}-F_t\right)-1.
