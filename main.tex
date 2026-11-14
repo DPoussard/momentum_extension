@@ -813,6 +813,16 @@ portfolio.
 
 \input{tables/portfolio_performance.tex}
 
+\begin{figure}[htbp]
+\centering
+\IfFileExists{figures/cumulative_performance.pdf}{%
+  \includegraphics[width=\textwidth]{figures/cumulative_performance.pdf}%
+}{\fbox{\parbox{0.9\textwidth}{Upload \texttt{figures/cumulative\_performance.pdf} to render this figure.}}}
+\caption{Cumulative gross wealth of unmanaged and volatility-managed reconstructed momentum strategies. The historical sample spans August 1929--December 2011 (left), and the extension spans January 2012--December 2025 (right). Each series begins with unit wealth at the start of its own sample. The vertical axis is logarithmic. Managed strategies target 12\% annualized volatility using lagged historical, EWMA, or GARCH forecasts. Returns exclude trading costs, financing charges, and leverage caps. Observed differences are descriptive and do not establish statistical significance.}
+\label{fig:cumulative_performance}
+\end{figure}
+
+
 
 Table~\ref{tab:portfolio_performance} compares the
 performance of unmanaged momentum and three
@@ -880,6 +890,16 @@ Among the three forecasting methods, EWMA produces the highest realized gross Sh
 \subsection{Volatility Forecast Accuracy}
 
 \input{tables/forecast_accuracy.tex}
+
+\begin{figure}[htbp]
+\centering
+\IfFileExists{figures/volatility_forecasts.pdf}{%
+  \includegraphics[width=\textwidth]{figures/volatility_forecasts.pdf}%
+}{\fbox{\parbox{0.9\textwidth}{Upload \texttt{figures/volatility\_forecasts.pdf} to render this figure.}}}
+\caption{One-month-ahead volatility forecasts and subsequent realized volatility of the reconstructed daily WML return series. The historical sample is shown on the left and January 2012--December 2025 on the right. Historical, EWMA ($\lambda=0.94$), and rolling Gaussian GARCH(1,1) forecasts formed at month-end $t$ are aligned with realized volatility in month $t+1$. All series are monthly volatility estimates annualized by multiplying by $\sqrt{12}$ and expressed as percentages. Realized volatility is the square root of the sum of squared daily WML returns within each month.}
+\label{fig:volatility_forecasts}
+\end{figure}
+
 
 
 Table~\ref{tab:forecast_accuracy} compares the
