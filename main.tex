@@ -96,10 +96,10 @@ Our methodological extension compares three approaches to forecasting momentum v
 
 Beyond forecasting accuracy and gross portfolio performance, we investigate whether the economic benefits of volatility management survive realistic implementation constraints. Specifically, we incorporate stock-level proportional transaction costs through a self-financing portfolio simulation and examine sensitivity to leverage caps and financing spreads. Finally, we employ a paired circular moving-block bootstrap to assess the statistical significance of differences in net Sharpe ratios across strategies, accounting for serial dependence and examining robustness to alternative block lengths and leverage constraints.
 
-Our results support the central economic
+Our results reproduce the central historical economic
 finding of Barroso and Santa-Clara (2015):
 volatility management substantially improves
-the risk-adjusted performance of momentum.
+the observed risk-adjusted performance of momentum.
 During the historical evaluation period,
 the unmanaged strategy achieves a Sharpe
 ratio of 0.510, compared with 0.963 for
@@ -109,7 +109,7 @@ unmanaged momentum performance deteriorates
 considerably during the 2012--2025
 extension, all three managed strategies
 continue to deliver higher realized
-Sharpe ratios.
+Sharpe ratios, although their net Sharpe improvements over unmanaged momentum are not statistically significant in the shorter extension sample.
 
 The forecasting results provide a more
 nuanced comparison of the conditional
@@ -488,7 +488,7 @@ The EWMA conditional variance estimate evolves according to
 
 where $\lambda \in (0,1)$ is the decay factor. Our baseline
 specification sets $\lambda = 0.94$, consistent with the
-conventional daily RiskMetrics parameterization.
+conventional daily RiskMetrics parameterization \citep{riskmetrics1996technical}.
 
 The recursion is initialized using the mean squared return
 over the first 126 available daily observations:
@@ -689,7 +689,7 @@ where the denominator is a heteroskedasticity- and
 autocorrelation-consistent standard error of the
 sample mean loss differential.
 
-Following Newey and West (1987), we use HAC standard
+Following \citet{newey1987simple}, we use HAC standard
 errors with three monthly lags to account for potential
 heteroskedasticity and serial dependence.
 
@@ -741,7 +741,7 @@ The financing charge is a simplified spread on leverage above one, not a compreh
 
 \subsection{Statistical Inference for Strategy Performance}
 \label{sec:bootstrap_method}
-To distinguish observed Sharpe-ratio differences from sampling uncertainty, we apply a paired circular moving-block bootstrap to the monthly net return series. In each replication, we sample starting months uniformly and concatenate circular blocks of consecutive observations until the original sample length is reached. The same resampled month indices are used for unmanaged momentum, historical volatility management, EWMA, and GARCH, preserving their contemporaneous return dependence while approximating short-run serial dependence.
+To distinguish observed Sharpe-ratio differences from sampling uncertainty, we apply a paired circular moving-block bootstrap to the monthly net return series, building on block-resampling methods for dependent observations \citep{kunsch1989jackknife}. In each replication, we sample starting months uniformly and concatenate circular blocks of consecutive observations until the original sample length is reached. The same resampled month indices are used for unmanaged momentum, historical volatility management, EWMA, and GARCH, preserving their contemporaneous return dependence while approximating short-run serial dependence.
 
 For strategies $A$ and $B$, our statistic is $\Delta\widehat{SR}_{A,B}=\widehat{SR}_A-\widehat{SR}_B$, where the Sharpe ratios are computed from annualized arithmetic mean returns and sample standard deviations with a zero risk-free benchmark. We also examine annualized mean-return differences. The primary specification uses $5{,}000$ bootstrap replications, six-month blocks, 95\% percentile confidence intervals, and the 10-basis-point transaction-cost scenario with zero financing costs and no leverage cap. Sensitivity analyses use three- and twelve-month blocks and a one-times leverage cap. Reported approximate two-sided $p$-values are obtained by centering the bootstrap differences at their observed value and comparing the absolute centered differences with the absolute observed statistic. We report multiple-testing sensitivity using a Bonferroni threshold of $0.05/6$ within each family of six pairwise strategy comparisons. Percentile intervals and centered-bootstrap $p$-values are not guaranteed to give identical significance decisions in finite samples.
 
@@ -1769,11 +1769,12 @@ exposure using estimated volatility
 substantially increases realized
 Sharpe ratios and reduces maximum
 drawdowns relative to the unmanaged
-portfolio. These benefits persist
+portfolio. Higher observed managed-strategy Sharpe ratios also appear
 in the 2012--2025 extension,
 although the underlying momentum
 premium and the returns of all
-strategies are considerably weaker.
+strategies are considerably weaker and the corresponding
+net Sharpe improvements are not statistically significant.
 
 Our methodological extension
 compares a 126-day historical
@@ -1833,6 +1834,18 @@ computationally simple EWMA
 approach can remain competitive
 with more sophisticated
 GARCH-based forecasts.
+
+\section*{Code and Data Availability}
+The analysis code is maintained at
+\url{https://github.com/yihang-hannah/momentum-risk-project}.
+The original-study replication uses public momentum portfolio
+returns from Kenneth French's Data Library. The stock-level
+reconstruction and implementation analyses require CRSP data
+accessed through WRDS, subject to the relevant institutional
+licenses and access permissions. Licensed CRSP data and user
+credentials are not distributed with the repository. Reproducing
+those results requires authorized WRDS access and the data
+preparation steps documented in the project code.
 
 \bibliographystyle{apalike}
 \bibliography{references}
