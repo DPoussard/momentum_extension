@@ -256,6 +256,11 @@ Portfolios are reconstituted monthly. Within each holding
 month, daily portfolio returns are calculated by tracking
 the evolution of the value-weighted stock positions,
 allowing portfolio weights to drift with realized returns.
+The resulting daily reconstructed WML series is used to
+estimate and forecast volatility. Monthly WML returns are
+constructed separately from the corresponding monthly stock
+portfolio returns; they are not obtained by compounding the
+daily long-minus-short factor returns.
 
 Our reconstruction explicitly processes recorded delisting
 returns and prevents their double-counting. Because some
@@ -430,7 +435,12 @@ using a rolling window of 756 daily momentum
 returns, approximately three trading years.
 The parameters are estimated by maximum
 likelihood under conditionally Gaussian errors,
-with the conditional mean fixed at zero.
+with the conditional mean fixed at zero. For numerical
+stability, daily returns are multiplied by 100 before
+estimation, and forecast variances are converted back to
+decimal-return units by dividing by $100^2$. Fits with a
+nonzero optimizer convergence flag are treated as unavailable
+forecasts rather than accepted estimates.
 
 We then generate forecasts of daily conditional
 variance for the next 21 trading days.
@@ -706,7 +716,7 @@ used to determine portfolio exposure.
 
 \subsection{Trading Frictions, Leverage Constraints, and Financing Costs}
 \label{sec:implementation_method}
-We complement the gross-return comparison with a stock-level, self-financing account simulation for the reconstructed winner-minus-loser (WML) portfolio. The simulator uses monthly holdings in the winner and loser deciles, applies the volatility-management exposure multiplier to their signed portfolio weights, and accounts for the trading needed to reach target positions. Trading costs are charged on absolute stock-level turnover, including rebalancing caused by changing constituents and drifted positions. Rather than deducting costs from an exogenously fixed portfolio value, the simulator solves for post-cost net asset value so that target positions and transaction costs are jointly self-financing. Monthly stock returns drive profit and loss, while ex-distribution price returns govern position drift; terminal delisting settlements and unresolved observations are handled explicitly by the underlying reconstruction.
+We complement the gross-return comparison with a stock-level, self-financing account simulation for the reconstructed winner-minus-loser (WML) portfolio. The simulator uses monthly holdings in the winner and loser deciles, applies the volatility-management exposure multiplier to their signed portfolio weights, and accounts for the trading needed to reach target positions. Trading costs are charged on absolute stock-level turnover, including rebalancing caused by changing constituents and drifted positions. Rather than deducting costs from an exogenously fixed portfolio value, the simulator solves for post-cost net asset value so that target positions and transaction costs are jointly self-financing. Monthly stock returns drive profit and loss, while ex-distribution price returns govern position drift; the difference is assigned to cash as a monthly approximation to distribution timing. The account does not simulate intramonth dividend reinvestment trades or delayed settlement of terminal delisting payoffs. Terminal delisting settlements and unresolved observations are handled explicitly by the underlying reconstruction.
 
 Let $q_{i,t}$ denote the target signed weight of stock $i$ as a fraction of post-trading-cost NAV, $p_{i,t}$ its pretrade signed weight relative to pretrade NAV, and $c$ the proportional transaction-cost rate. The post-cost-to-pre-cost NAV ratio $x_t$ satisfies
 \begin{equation}
