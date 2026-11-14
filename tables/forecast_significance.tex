@@ -1,0 +1,42 @@
+
+\begin{table}[htbp]
+\centering
+\caption{HAC Tests of Volatility Forecast-Loss Differences}
+\label{tab:forecast_significance}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Comparison ($A-B$) & Months & Mean Loss Diff.
+& HAC $t$ & $p$-value \\
+\midrule
+\multicolumn{5}{l}{\textit{August 1929--December 2011}} \\
+Historical -- GARCH
+    & 989 & 0.000224 & 2.064 & 0.0391 \\
+Historical -- EWMA
+    & 989 & 0.000233 & 2.504 & 0.0123 \\
+GARCH -- EWMA
+    & 989 & 0.000009 & 0.279 & 0.7805 \\
+\midrule
+\multicolumn{5}{l}{\textit{January 2012--December 2025}} \\
+Historical -- GARCH
+    & 168 & 0.000149 & 1.008 & 0.3132 \\
+Historical -- EWMA
+    & 168 & 0.000128 & 0.890 & 0.3734 \\
+GARCH -- EWMA
+    & 168 & -0.000021 & -0.562 & 0.5738 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2cm}
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\textit{Notes:} The loss differential equals the
+squared forecast error of estimator $A$ minus
+that of estimator $B$. Positive values favor $B$.
+Tests use Newey--West HAC standard errors with
+three monthly lags and two-sided $p$-values.
+Reported $p$-values are unadjusted for multiple
+comparisons.
+\end{minipage}
+\end{table}
+

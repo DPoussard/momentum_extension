@@ -1,0 +1,1833 @@
+\documentclass[11pt]{article}
+
+% Packages
+
+% Paragraph formatting
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Remove paragraph indentation
+\setlength{\parindent}{0pt}
+
+% Add vertical spacing between paragraphs
+\setlength{\parskip}{6pt}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage[authoryear,round]{natbib}
+% Document information
+\title{Momentum Has Its Moments: Replication and Extension Using
+EWMA and GARCH-Based Volatility Management}
+\author{David Poussard (dp3372), Yihang Guo (yg3083), Rong Ji (rj2754)}
+\date{December 2026}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Introduction}
+\label{sec:introduction}
+
+
+Momentum is one of the most extensively documented
+anomalies in financial markets. In their seminal study,
+\citet{jegadeesh1993returns} demonstrate that strategies
+buying stocks with strong past performance and selling
+stocks with weak past performance generate significant
+positive returns over intermediate investment horizons.
+ Stocks that have performed relatively well over
+the preceding months tend to continue outperforming stocks with
+poor recent performance, giving rise to the widely studied
+winner-minus-loser (WML) investment strategy. Despite its
+historically attractive average returns, momentum is also
+characterized by substantial downside risk. In particular,
+momentum strategies can experience severe losses during abrupt
+market reversals, when previously underperforming stocks recover
+sharply and recent winners underperform.
+
+
+\citet{barroso2015momentum}, in
+\textit{Momentum Has Its Moments}, demonstrate that
+momentum risk varies considerably over time and that a relatively simple volatility-management
+strategy can substantially improve its risk-adjusted
+performance. Their approach adjusts momentum exposure inversely
+with an estimate of expected volatility, reducing positions
+during turbulent periods and increasing exposure when predicted
+volatility is relatively low. Using a six-month rolling window
+of daily momentum returns to estimate volatility, they document
+a substantial improvement in the strategy's Sharpe ratio,
+alongside reductions in extreme losses and other undesirable
+features of the return distribution.
+
+These findings raise a natural question: if volatility
+management improves momentum performance, can a more
+sophisticated volatility forecasting model generate further
+benefits? The historical estimator employed by Barroso and
+Santa-Clara relies on a fixed window of past squared returns.
+Although straightforward and transparent, this approach does
+not explicitly model the persistence and clustering of
+conditional volatility. Generalized autoregressive conditional
+heteroskedasticity (GARCH) models offer an alternative by
+allowing expected volatility to evolve dynamically in response
+to recent return shocks and past conditional variance.
+
+
+
+This paper revisits the volatility-managed momentum
+strategy proposed by Barroso and Santa-Clara (2015)
+through a replication and two extensions. First, we
+reconstruct the momentum portfolio and evaluate
+whether scaling exposure using historical volatility
+reproduces the principal economic findings of the
+original study. Second, we extend the evaluation
+through December 2025 to examine whether the
+benefits of volatility management persist in a
+more recent market environment. Third, we
+investigate whether alternative conditional
+volatility estimators improve forecasting
+accuracy and portfolio performance.
+
+Our methodological extension compares three approaches to forecasting momentum volatility: a 126-day historical estimator, an exponentially weighted moving average (EWMA) estimator, and a rolling GARCH(1,1) model. The historical estimator serves as the benchmark, while EWMA and GARCH allow volatility estimates to respond more dynamically to recent market conditions. We evaluate the resulting strategies using annualized returns, realized volatility, Sharpe ratios, maximum drawdowns, and average portfolio exposure. We also compare out-of-sample volatility forecast accuracy and test differences in squared forecast loss using heteroskedasticity- and autocorrelation-consistent standard errors.
+
+Beyond forecasting accuracy and gross portfolio performance, we investigate whether the economic benefits of volatility management survive realistic implementation constraints. Specifically, we incorporate stock-level proportional transaction costs through a self-financing portfolio simulation and examine sensitivity to leverage caps and financing spreads. Finally, we employ a paired circular moving-block bootstrap to assess the statistical significance of differences in net Sharpe ratios across strategies, accounting for serial dependence and examining robustness to alternative block lengths and leverage constraints.
+
+Our results support the central economic
+finding of Barroso and Santa-Clara (2015):
+volatility management substantially improves
+the risk-adjusted performance of momentum.
+During the historical evaluation period,
+the unmanaged strategy achieves a Sharpe
+ratio of 0.510, compared with 0.963 for
+historical volatility management, 1.017
+for EWMA, and 0.946 for GARCH. Although
+unmanaged momentum performance deteriorates
+considerably during the 2012--2025
+extension, all three managed strategies
+continue to deliver higher realized
+Sharpe ratios.
+
+The forecasting results provide a more
+nuanced comparison of the conditional
+volatility models. Both EWMA and GARCH
+reduce forecast errors relative to the
+historical estimator, particularly in
+the historical sample. EWMA achieves
+the lowest historical forecast RMSE,
+while GARCH has a marginal advantage
+in the extension period. However,
+pairwise tests do not establish a
+statistically significant difference
+in squared forecast loss between
+EWMA and GARCH in either period.
+
+Robustness analyses further indicate
+that the results do not depend
+exclusively on a single conditional
+volatility specification. EWMA
+performance remains relatively stable
+across moderate changes in its decay
+factor, while the GARCH analysis
+examines alternative innovation
+distributions and rolling estimation
+windows.
+
+Taken together, these findings
+suggest that the principal economic
+benefit arises from adjusting
+momentum exposure to changing
+volatility conditions, rather than
+from selecting a uniquely superior
+forecasting model. The relative
+simplicity and competitive performance
+of EWMA also illustrate that greater
+model complexity does not necessarily
+translate into better realized
+investment outcomes.
+
+
+
+
+\section{Data and Portfolio Construction}
+\label{sec:data}
+
+\subsection{Data Sources}
+
+This study uses two complementary sources of U.S. equity
+returns to replicate and extend the findings of Barroso
+and Santa-Clara (2015).
+
+For the replication of the original study, we obtain
+value-weighted momentum decile portfolio returns from
+Kenneth French's Data Library. We construct the
+winner-minus-loser (WML) portfolio as the return
+difference between the highest- and lowest-momentum
+deciles. This replication covers July 1927 through
+December 2011 and provides a benchmark for validating
+our implementation of the original volatility-management
+strategy.
+
+For our principal extension, we independently reconstruct
+a WML momentum portfolio using stock-level return data
+from the Center for Research in Security Prices (CRSP),
+accessed through Wharton Research Data Services (WRDS).
+This reconstruction allows us to apply the historical
+volatility estimator and the GARCH(1,1) model to an
+identical underlying return series. We also compare the
+reconstructed portfolio with the published momentum
+factor from Kenneth French's Data Library as an external
+validation benchmark.
+
+The extension analysis is divided into two periods.
+The historical comparison covers August 1929 through
+December 2011, while the subsequent evaluation covers
+January 2012 through December 2025. All three strategies
+within each period are evaluated on the same monthly
+observations, ensuring that differences in performance
+are not driven by unequal sample lengths.
+
+
+
+\subsection{Momentum Portfolio}
+\label{subsec:momentum}
+
+We reconstruct a cross-sectional winner-minus-loser (WML)
+momentum strategy using individual U.S. equity returns from CRSP.
+Our portfolio formation procedure follows the general framework
+of the momentum factor methodology documented in Kenneth
+French's Data Library.
+
+At the end of each month $t-1$, stocks are ranked according
+to their cumulative returns from months $t-12$ through $t-2$.
+The most recent month is excluded to avoid short-term reversal
+effects. For stock $i$, the momentum signal used to form the
+portfolio held during month $t$ is
+
+\begin{equation}
+MOM_{i,t}
+=
+\prod_{k=2}^{12}(1+r_{i,t-k})-1,
+\end{equation}
+
+where $r_{i,t-k}$ denotes the monthly return of stock $i$
+at lag $k$. The ranking period therefore contains eleven
+calendar months, with a one-month gap before the holding period.
+
+The eligible universe consists primarily of ordinary common
+shares (CRSP historical share codes 10 and 11) listed on
+the NYSE, AMEX, or NASDAQ. Stocks must have positive
+market capitalization at formation, a valid momentum signal,
+and an eligible historical price observation. Securities
+already delisted at the formation date are excluded.
+
+At each formation date, we calculate momentum breakpoints
+using eligible NYSE stocks. The 10th through 90th percentiles
+define ten momentum portfolios, and eligible stocks from
+all three exchanges are assigned to the corresponding deciles.
+
+Within each decile, stocks are weighted by their market
+capitalization at the end of the formation month:
+
+\begin{equation}
+w_{i,t-1}^{(d)}
+=
+\frac{MCAP_{i,t-1}}
+{\sum_{j \in \mathcal{P}_{d,t}} MCAP_{j,t-1}},
+\end{equation}
+
+where $\mathcal{P}_{d,t}$ is the set of stocks assigned
+to decile $d$ for holding month $t$.
+
+The momentum strategy takes a long position in the
+highest-momentum decile and a short position in the
+lowest-momentum decile:
+
+\begin{equation}
+r_t^{WML}
+=
+r_t^{P10}-r_t^{P1}.
+\end{equation}
+
+Portfolios are reconstituted monthly. Within each holding
+month, daily portfolio returns are calculated by tracking
+the evolution of the value-weighted stock positions,
+allowing portfolio weights to drift with realized returns.
+
+Our reconstruction explicitly processes recorded delisting
+returns and prevents their double-counting. Because some
+historical CRSP observations contain incomplete return or
+terminal-payoff information, we also implement an explicitly
+identified missing-data treatment. The primary reconstructed
+daily series retains available numeric return components
+and assigns zero increments to otherwise unresolved
+components. These assumptions are part of the reconstruction
+procedure and should not be interpreted as observed returns
+or evidence that the affected securities were tradable.
+
+For the most recent observations, where legacy security
+classification fields are unavailable, we apply a
+separately identified eligibility screen based on CRSP's
+CIZ security attributes. This screen approximates the
+historical common-stock universe but is not assumed
+to be exactly equivalent to the legacy classification.
+
+
+\subsection{Sample Construction}
+
+Our historical and extension samples use the same underlying
+portfolio construction and volatility-management framework.
+This ensures that differences in empirical performance are not
+driven by changes in the definition of the momentum strategy.
+
+The historical analysis begins in August 1929 because the
+rolling GARCH specification requires an initial estimation
+window of 756 daily observations. Restricting the comparison
+to dates for which all strategies have available volatility
+forecasts ensures a consistent evaluation sample.
+
+The extension period begins in January 2012, immediately
+following the historical sample, and continues through
+December 2025. Both periods are evaluated using monthly
+portfolio returns, while the competing volatility forecasts
+are generated from daily data.
+
+
+\section{Volatility Management Methodology}
+\label{sec:methodology}
+
+\subsection{Volatility-Managed Momentum}
+
+Following the framework of Barroso and Santa-Clara (2015),
+we investigate whether dynamically adjusting exposure to
+momentum based on predicted volatility improves its
+risk-adjusted performance.
+
+Let $r_{t+1}^{WML}$ denote the return on the unscaled
+winner-minus-loser momentum portfolio in month $t+1$.
+The return on the volatility-managed strategy is
+
+\begin{equation}
+r_{t+1}^{VM}
+=
+L_t r_{t+1}^{WML},
+\label{eq:managed_return}
+\end{equation}
+
+where $L_t$ is the exposure selected at the end of month
+$t$, using only information available at that time.
+
+Exposure is determined by
+
+\begin{equation}
+L_t
+=
+\frac{\sigma_{\mathrm{target}}}
+{\widehat{\sigma}_{t+1|t}},
+\label{eq:vol_target}
+\end{equation}
+
+where $\widehat{\sigma}_{t+1|t}$ is the forecast of
+momentum volatility for the following month, and
+$\sigma_{\mathrm{target}}$ is the desired monthly
+volatility level.
+
+We set the annualized volatility target to 12\%,
+corresponding to a monthly target of
+
+\begin{equation}
+\sigma_{\mathrm{target}}
+=
+\frac{0.12}{\sqrt{12}}.
+\end{equation}
+
+This rule reduces exposure when predicted volatility
+is high and increases exposure when predicted volatility
+is low. The exposure multiplier is not capped, so
+the strategy can employ leverage when forecast
+volatility falls below the target.
+
+
+We compare three approaches to forecasting volatility:
+a rolling historical estimator, an exponentially weighted
+moving average (EWMA) estimator, and a GARCH(1,1)
+conditional volatility model.
+
+
+\subsection{Historical Volatility Estimator}
+
+Our benchmark follows the historical volatility
+estimation approach used in the original study.
+At the end of each month $t$, we calculate
+volatility using the most recent 126 daily
+momentum returns.
+
+Let $r_d^{WML}$ denote a daily momentum return,
+and let $\mathcal{D}_t$ contain the 126 trading
+days ending at month-end $t$. The forecast is
+
+\begin{equation}
+\widehat{\sigma}_{t+1|t}^{HIST}
+=
+\sqrt{
+21 \times
+\frac{1}{126}
+\sum_{d \in \mathcal{D}_t}
+(r_d^{WML})^2
+}.
+\label{eq:hist_vol}
+\end{equation}
+
+The factor of 21 converts the daily second-moment
+estimate to an approximate monthly volatility
+measure, assuming 21 trading days per month.
+
+The estimator uses squared returns without
+subtracting the sample mean, consistent with
+the volatility-management specification
+implemented in our replication.
+
+\subsection{GARCH(1,1) Volatility Forecast}
+
+
+Our principal extension replaces the historical
+volatility estimate with a conditional volatility
+forecast obtained from a GARCH(1,1) model.
+Building on the ARCH framework introduced by
+\citet{engle1982arch}, the GARCH model developed
+by \citet{bollerslev1986garch} captures volatility
+clustering through the dependence of conditional
+variance on past squared innovations and past
+conditional variance.
+
+
+Daily momentum returns are modeled as
+
+\begin{align}
+r_d^{WML} &= \varepsilon_d, \\
+\varepsilon_d &= \sigma_d z_d,
+\qquad z_d \sim \mathcal{N}(0,1), \\
+\sigma_d^2
+&=
+\omega
++
+\alpha \varepsilon_{d-1}^2
++
+\beta \sigma_{d-1}^2.
+\label{eq:garch}
+\end{align}
+
+The model captures volatility clustering by
+allowing conditional variance to depend on
+recent squared return innovations and its
+own lagged value.
+
+At each month-end, we re-estimate the model
+using a rolling window of 756 daily momentum
+returns, approximately three trading years.
+The parameters are estimated by maximum
+likelihood under conditionally Gaussian errors,
+with the conditional mean fixed at zero.
+
+We then generate forecasts of daily conditional
+variance for the next 21 trading days.
+The monthly volatility forecast is constructed as
+
+\begin{equation}
+\widehat{\sigma}_{t+1|t}^{GARCH}
+=
+\sqrt{
+\sum_{h=1}^{21}
+\widehat{\sigma}_{t+h|t}^{2}
+}.
+\label{eq:garch_monthly}
+\end{equation}
+
+This approach incorporates the time-varying
+conditional variance dynamics estimated by
+GARCH while maintaining the same approximate
+monthly forecasting horizon as the historical
+estimator.
+
+Both volatility forecasts are computed using
+information available at the end of month $t$.
+Their corresponding exposure multipliers are
+applied to the momentum return realized during
+month $t+1$, avoiding look-ahead bias.
+
+
+\subsection{EWMA Volatility Forecast}
+
+As a second extension, we consider an exponentially weighted
+moving average (EWMA) estimator of momentum volatility.
+Unlike the historical estimator, which assigns equal weight
+to the preceding 126 daily observations, EWMA places
+greater weight on recent squared returns while retaining
+information from earlier observations.
+
+Let $r_d^{WML}$ denote the daily momentum return.
+The EWMA conditional variance estimate evolves according to
+
+\begin{equation}
+    v_d = \lambda v_{d-1}
+    + (1-\lambda)(r_d^{WML})^2,
+\end{equation}
+
+where $\lambda \in (0,1)$ is the decay factor. Our baseline
+specification sets $\lambda = 0.94$, consistent with the
+conventional daily RiskMetrics parameterization.
+
+The recursion is initialized using the mean squared return
+over the first 126 available daily observations:
+
+\begin{equation}
+    v_{d_0} =
+    \frac{1}{126}
+    \sum_{i=1}^{126}(r_i^{WML})^2,
+\end{equation}
+
+where $d_0$ denotes the final observation in the
+initialization window.
+
+At each month-end $t$, we use the most recently updated
+daily variance estimate to forecast volatility over the
+following 21 trading days:
+
+\begin{equation}
+    \widehat{\sigma}^{EWMA}_{t+1|t}
+    = \sqrt{21v_{d(t)}},
+\end{equation}
+
+where $d(t)$ denotes the final trading day of month $t$.
+
+The forecast determines the exposure multiplier applied
+to the subsequent month's momentum return, following
+the same 12\% annualized volatility-targeting rule used
+for the historical and GARCH strategies.
+
+EWMA provides an intermediate specification between
+the equally weighted historical estimator and the
+parametrically estimated GARCH(1,1) model. It captures
+volatility persistence through an exponentially decaying
+weighting scheme without requiring repeated
+maximum-likelihood estimation.
+
+To assess sensitivity to the decay factor, we also
+evaluate $\lambda \in \{0.90, 0.94, 0.97, 0.99\}$.
+All specifications use the same underlying momentum
+returns and are compared over identical monthly
+observations within each evaluation period.
+
+\subsection{Performance Evaluation}
+
+We evaluate unmanaged momentum and both
+volatility-managed strategies using annualized
+mean returns, annualized volatility, Sharpe
+ratios, maximum drawdowns, and average exposure.
+
+Annualized mean return and volatility are
+calculated from monthly strategy returns as
+
+\begin{align}
+\mu_{\mathrm{ann}}
+&= 12\,\overline{r}, \\
+\sigma_{\mathrm{ann}}
+&= \sqrt{12}\,s_r,
+\end{align}
+
+where $\overline{r}$ and $s_r$ are the sample
+mean and standard deviation of monthly returns.
+
+Sharpe ratios are computed as
+
+\begin{equation}
+SR
+=
+\frac{\mu_{\mathrm{ann}}}
+{\sigma_{\mathrm{ann}}},
+\end{equation}
+
+using a zero risk-free rate for consistency
+across strategies.
+
+All reported strategy returns are gross
+of transaction costs, financing expenses,
+and short-selling costs. Consequently,
+the results should be interpreted as
+theoretical strategy performance rather
+than directly investable net returns.
+
+
+\subsection{Volatility Forecast Evaluation}
+
+To evaluate the predictive accuracy of the two volatility
+estimators, we compare their forecasts with the realized
+volatility of the momentum portfolio during the subsequent
+calendar month.
+
+Realized monthly volatility is calculated from the daily
+momentum returns observed within month $t+1$:
+
+\begin{equation}
+\sigma_{t+1}^{realized}
+=
+\sqrt{
+\sum_{d \in \mathcal{M}_{t+1}}
+(r_d^{WML})^2
+},
+\label{eq:realized_vol}
+\end{equation}
+
+where $\mathcal{M}_{t+1}$ denotes the set of trading days
+in month $t+1$.
+
+For each forecasting method
+$j \in \{\mathrm{HIST},\mathrm{EWMA},\mathrm{GARCH}\}$,
+we define the forecast error as
+
+\begin{equation}
+e_{t+1}^{j}
+=
+\widehat{\sigma}_{t+1|t}^{j}
+-
+\sigma_{t+1}^{realized}.
+\end{equation}
+
+We assess forecast accuracy using four measures:
+mean absolute error (MAE), root mean squared error
+(RMSE), mean forecast bias, and the correlation
+between forecast and realized volatility.
+
+These measures are defined as
+
+\begin{align}
+MAE_j
+&=
+\frac{1}{T}
+\sum_{t=1}^{T}|e_t^j|,
+\\[6pt]
+RMSE_j
+&=
+\sqrt{
+\frac{1}{T}
+\sum_{t=1}^{T}(e_t^j)^2
+},
+\\[6pt]
+Bias_j
+&=
+\frac{1}{T}
+\sum_{t=1}^{T}e_t^j,
+\\[6pt]
+Corr_j
+&=
+Corr(
+\widehat{\sigma}_{t}^{j},
+\sigma_t^{realized}
+).
+\end{align}
+
+Lower MAE and RMSE indicate more accurate volatility
+forecasts, while a bias closer to zero indicates
+less systematic overprediction or underprediction.
+Higher correlation indicates a stronger association
+between forecast and realized volatility.
+
+
+\subsection{Statistical Significance of Forecast Improvements}
+
+To determine whether differences in volatility forecast
+accuracy are statistically significant, we compare the
+squared forecast errors of the historical, EWMA, and
+GARCH estimators.
+
+For two competing forecasting methods $A$ and $B$,
+we define the monthly loss differential as
+
+\begin{equation}
+    d_t^{A,B}
+    =
+    (e_t^A)^2 - (e_t^B)^2,
+\end{equation}
+
+where $e_t^A$ and $e_t^B$ denote the corresponding
+volatility forecast errors. A positive loss differential
+indicates that method $B$ produces a smaller squared
+forecast error than method $A$.
+
+We test the null hypothesis of equal expected squared
+forecast losses,
+
+\begin{equation}
+    H_0: \mathbb{E}[d_t^{A,B}] = 0,
+\end{equation}
+
+against the two-sided alternative
+
+\begin{equation}
+    H_1: \mathbb{E}[d_t^{A,B}] \neq 0.
+\end{equation}
+
+The test statistic is
+
+\begin{equation}
+    t_{\mathrm{HAC}}
+    =
+    \frac{\overline{d}^{A,B}}
+    {\widehat{\mathrm{SE}}_{\mathrm{HAC}}
+    (\overline{d}^{A,B})},
+\end{equation}
+
+where the denominator is a heteroskedasticity- and
+autocorrelation-consistent standard error of the
+sample mean loss differential.
+
+Following Newey and West (1987), we use HAC standard
+errors with three monthly lags to account for potential
+heteroskedasticity and serial dependence.
+
+Our baseline analysis considers three pairwise comparisons:
+historical volatility versus GARCH, historical volatility
+versus EWMA, and GARCH versus EWMA.
+
+We conduct these tests separately over the historical
+sample (August 1929--December 2011) and the extension
+sample (January 2012--December 2025).
+
+We additionally assess forecast-loss differences across
+alternative GARCH specifications and EWMA decay factors.
+Because these robustness exercises involve multiple
+comparisons, we distinguish individual test significance
+from conclusions that remain significant after adjustment
+for multiple testing.
+
+Importantly, these tests evaluate statistical forecast
+accuracy rather than differences in realized portfolio
+performance. A more accurate volatility forecast does
+not necessarily produce a higher Sharpe ratio when
+used to determine portfolio exposure.
+
+\subsection{Trading Frictions, Leverage Constraints, and Financing Costs}
+\label{sec:implementation_method}
+We complement the gross-return comparison with a stock-level, self-financing account simulation for the reconstructed winner-minus-loser (WML) portfolio. The simulator uses monthly holdings in the winner and loser deciles, applies the volatility-management exposure multiplier to their signed portfolio weights, and accounts for the trading needed to reach target positions. Trading costs are charged on absolute stock-level turnover, including rebalancing caused by changing constituents and drifted positions. Rather than deducting costs from an exogenously fixed portfolio value, the simulator solves for post-cost net asset value so that target positions and transaction costs are jointly self-financing. Monthly stock returns drive profit and loss, while ex-distribution price returns govern position drift; terminal delisting settlements and unresolved observations are handled explicitly by the underlying reconstruction.
+
+Let $q_{i,t}$ denote the target signed weight of stock $i$ as a fraction of post-trading-cost NAV, $p_{i,t}$ its pretrade signed weight relative to pretrade NAV, and $c$ the proportional transaction-cost rate. The post-cost-to-pre-cost NAV ratio $x_t$ satisfies
+\begin{equation}
+ x_t+c\sum_i\left|x_tq_{i,t}-p_{i,t}\right|=1.
+ \label{eq:self_financing_cost}
+\end{equation}
+The associated stock-level turnover is $\mathcal{T}_t=\sum_i|x_tq_{i,t}-p_{i,t}|$. Our baseline cost assumption is $c=10/10{,}000$, and the sensitivity analysis considers $0$, $5$, $10$, $20$, and $50$ basis points per unit traded. These assumptions represent stylized proportional trading fees rather than empirically estimated historical execution costs.
+
+For leverage sensitivity, we replace the unconstrained exposure $L_t$ with $L_t^{(K)}=\min(L_t,K)$, where $K\in\{1,1.5,2\}$; the unconstrained rule is retained as a benchmark. We also consider annualized financing spreads $f\in\{0,100,300\}$ basis points on exposure exceeding one unit. The monthly financing deduction, measured relative to post-cost NAV, is
+\begin{equation}
+ F_t=\frac{f}{10{,}000\times12}\max\left(L_t^{(K)}-1,0\right).
+ \label{eq:financing}
+\end{equation}
+For gross portfolio return $R_t^{\mathrm{gross}}=\sum_iq_{i,t}r_{i,t}$, the modeled net account return is
+\begin{equation}
+ R_t^{\mathrm{net}}=x_t\left(1+R_t^{\mathrm{gross}}-F_t\right)-1.
+ \label{eq:net_account_return}
+\end{equation}
+The financing charge is a simplified spread on leverage above one, not a comprehensive treatment of short-borrow fees, collateral remuneration, margin, market impact, or execution constraints. We evaluate the same 989 historical and 168 extension months as in the main reconstructed-portfolio comparison.
+
+\subsection{Statistical Inference for Strategy Performance}
+\label{sec:bootstrap_method}
+To distinguish observed Sharpe-ratio differences from sampling uncertainty, we apply a paired circular moving-block bootstrap to the monthly net return series. In each replication, we sample starting months uniformly and concatenate circular blocks of consecutive observations until the original sample length is reached. The same resampled month indices are used for unmanaged momentum, historical volatility management, EWMA, and GARCH, preserving their contemporaneous return dependence while approximating short-run serial dependence.
+
+For strategies $A$ and $B$, our statistic is $\Delta\widehat{SR}_{A,B}=\widehat{SR}_A-\widehat{SR}_B$, where the Sharpe ratios are computed from annualized arithmetic mean returns and sample standard deviations with a zero risk-free benchmark. We also examine annualized mean-return differences. The primary specification uses $5{,}000$ bootstrap replications, six-month blocks, 95\% percentile confidence intervals, and the 10-basis-point transaction-cost scenario with zero financing costs and no leverage cap. Sensitivity analyses use three- and twelve-month blocks and a one-times leverage cap. Reported approximate two-sided $p$-values are obtained by centering the bootstrap differences at their observed value and comparing the absolute centered differences with the absolute observed statistic. We report multiple-testing sensitivity using a Bonferroni threshold of $0.05/6$ within each family of six pairwise strategy comparisons. Percentile intervals and centered-bootstrap $p$-values are not guaranteed to give identical significance decisions in finite samples.
+
+The procedure conditions on the estimated strategies and observed return histories: it does not re-estimate GARCH parameters or reconstruct momentum holdings inside each resample. Accordingly, inference concerns the realized strategy return series rather than the full uncertainty of the model-selection and portfolio-construction process.
+
+
+
+\section{Empirical Results}
+\label{sec:results}
+\subsection{Replication of Published Results}
+\label{sec:replication}
+\input{tables/replication_comparison.tex}
+
+
+Table~\ref{tab:replication} compares our replication of the
+volatility-managed momentum strategy with the results reported
+by Barroso and Santa-Clara (2015). The replication closely
+reproduces the principal empirical findings of the original
+study, although the reported statistics are not identical.
+
+For unmanaged momentum, our replication produces an annualized
+mean return of 14.80\%, annualized volatility of 27.45\%, and
+a Sharpe ratio of 0.54. These estimates are close to the
+published values of 14.46\%, 27.53\%, and 0.53, respectively.
+The unmanaged portfolio also exhibits substantial downside
+risk, with a worst monthly return of -77.66\%, negative
+skewness of -2.38, and excess kurtosis of 18.01.
+
+Applying the historical volatility-management rule improves
+the risk-adjusted performance and return distribution of the
+momentum strategy. In our replication, the annualized Sharpe
+ratio increases from 0.54 to 0.99, compared with an increase
+from 0.53 to 0.97 in the original study. Annualized volatility
+declines from 27.45\% to 16.78\%, while the maximum drawdown
+improves from -95.56\% to -43.83\%. The managed strategy also
+exhibits substantially less negative skewness and lower excess
+kurtosis.
+
+The remaining numerical differences reflect limitations in
+the comparability of the underlying datasets and sample
+periods. The original study reports results from March 1927
+through December 2011 and incorporates historical daily
+momentum portfolios from Daniel and Moskowitz for the early
+sample. 
+Our replication instead uses Kenneth French's
+value-weighted momentum decile portfolios throughout
+and adopts July 1927 as the beginning of the
+evaluation window. Although sufficient daily
+observations are available to construct the first
+volatility-managed return in May 1927, we retain
+the July starting date for our baseline replication.
+A sensitivity check beginning in May 1927 produces
+virtually unchanged performance statistics.
+ Differences
+in data vintages and portfolio return histories may therefore
+contribute to discrepancies, particularly in tail-sensitive
+statistics.
+
+Overall, the close agreement in average returns, volatility,
+Sharpe ratios, and distributional characteristics supports
+the validity of our implementation of the original
+volatility-management methodology. Having established this
+baseline, we turn to our principal extension: comparing the
+historical volatility estimator with a rolling GARCH(1,1)
+forecast using a consistently reconstructed CRSP momentum
+portfolio.
+
+\subsection{Portfolio Performance}
+
+\input{tables/portfolio_performance.tex}
+
+
+Table~\ref{tab:portfolio_performance} compares the
+performance of unmanaged momentum and three
+volatility-managed strategies based on historical
+volatility, EWMA, and GARCH(1,1) forecasts.
+
+During the historical period (August 1929--December
+2011), unmanaged momentum generates an annualized
+mean return of 14.10\%, annualized volatility of
+27.65\%, and a Sharpe ratio of 0.51. Its maximum
+drawdown reaches 95.37\%, illustrating the substantial
+downside risk of an unscaled momentum strategy.
+
+All three volatility-management approaches substantially
+improve risk-adjusted performance. Historical volatility
+management increases the Sharpe ratio to 0.963,
+while GARCH-based management achieves 0.946.
+EWMA delivers the highest Sharpe ratio of 1.017,
+with an annualized mean return of 18.06\% and
+realized volatility of 17.76\%.
+
+The EWMA strategy also reduces the maximum drawdown
+to 35.43\%, compared with 42.02\% for the historical
+estimator. GARCH produces a slightly smaller maximum
+drawdown of 34.15\%, alongside the lowest annualized
+volatility among the managed strategies.
+
+The extension period (January 2012--December 2025)
+reveals a substantial deterioration in unmanaged
+momentum performance. Its annualized mean return
+declines to 4.63\%, while volatility remains elevated
+at 27.15\%, producing a Sharpe ratio of only 0.171.
+
+Volatility management continues to improve
+risk-adjusted performance in this more recent sample.
+Historical volatility management achieves a Sharpe
+ratio of 0.337, GARCH achieves 0.318, and EWMA
+again records the highest value at 0.343.
+
+However, the differences among managed strategies
+are considerably smaller in the extension period.
+EWMA produces annualized volatility of 13.30\%,
+compared with 12.47\% for historical volatility
+management and 12.99\% for GARCH. The historical
+estimator also produces the smallest maximum drawdown
+of 22.51\%, compared with 24.68\% for EWMA and
+25.86\% for GARCH.
+
+An important difference between the two periods
+concerns average portfolio exposure. During the
+historical sample, average exposure ranges from
+0.881 for GARCH to 0.979 for EWMA. In the
+extension period, exposure declines substantially
+across all three managed strategies, ranging from
+0.522 to 0.562.
+
+These findings support the central conclusion of
+Barroso and Santa-Clara (2015): volatility management
+can substantially improve the risk-adjusted
+performance of momentum strategies.
+
+Among the three forecasting methods, EWMA produces the highest realized gross Sharpe ratio in both periods. Nevertheless, the comparisons presented in Table 2 are descriptive and do not, by themselves, establish statistically significant differences in risk-adjusted performance. Moreover, the strategies exhibit different realized volatility and exposure levels, and the results in this table exclude trading and financing costs. Consequently, the observed advantage of EWMA should not be interpreted as conclusive evidence of superior economic performance. Sections 4.7 and 4.8 subsequently examine the effects of transaction costs, leverage constraints, and financing expenses, while Section 4.9 formally evaluates differences in net Sharpe ratios using paired block-bootstrap inference.
+
+
+\subsection{Volatility Forecast Accuracy}
+
+\input{tables/forecast_accuracy.tex}
+
+
+Table~\ref{tab:forecast_accuracy} compares the
+predictive accuracy of the 126-day historical
+volatility estimator, EWMA, and GARCH(1,1).
+Forecasts are evaluated against realized monthly
+momentum volatility using mean absolute error
+(MAE), root mean squared error (RMSE), forecast
+bias, and correlation.
+
+During the historical period, both EWMA and
+GARCH improve forecast accuracy relative to the
+historical estimator. The historical estimator
+produces an RMSE of 0.02920, compared with
+0.02488 for EWMA and 0.02507 for GARCH.
+These correspond to reductions of approximately
+14.8\% and 14.1\%, respectively.
+
+EWMA also achieves the lowest MAE (0.01453)
+and the highest correlation with realized
+volatility (0.803), narrowly outperforming
+GARCH on both measures. These results suggest
+that assigning greater weight to recent squared
+returns improves the ability to anticipate
+changes in momentum volatility.
+
+However, EWMA does not outperform the
+historical estimator on every metric. Its
+mean forecast bias is -0.00139, indicating
+modest average underprediction, compared with
+positive biases of 0.00077 and 0.00118 for
+historical volatility and GARCH, respectively.
+The historical estimator therefore exhibits
+the smallest absolute bias in this period.
+
+In the extension period, the forecasting
+advantages of EWMA and GARCH remain present
+but are smaller. GARCH achieves the lowest
+RMSE (0.02909) and MAE (0.02014), followed
+closely by EWMA (0.02945 and 0.02064).
+Both improve upon the historical estimator,
+which records an RMSE of 0.03155 and an
+MAE of 0.02269.
+
+EWMA exhibits the smallest absolute forecast
+bias in the extension period (-0.00090),
+while EWMA and GARCH achieve nearly
+identical correlations with realized
+volatility, approximately 0.713.
+
+Overall, the results indicate that both
+EWMA and GARCH improve statistical volatility
+forecasting relative to the equally weighted
+historical estimator. Their relative ranking,
+however, depends on the evaluation period
+and the chosen accuracy measure.
+
+Notably, the more sophisticated GARCH model
+does not consistently outperform the simpler
+EWMA estimator. During the historical period,
+EWMA achieves slightly lower forecast errors,
+while GARCH has a marginal advantage in the
+extension period.
+
+These findings also highlight the distinction
+between statistical forecasting performance
+and economic outcomes. Although EWMA records
+the highest realized Sharpe ratio in both
+periods, its forecast accuracy is not
+uniformly superior across samples.
+
+Portfolio performance depends not only on
+the magnitude of volatility forecast errors,
+but also on their timing, the resulting
+exposure adjustments, and subsequent
+momentum returns.
+
+
+\subsection{Statistical Significance}
+\input{tables/forecast_significance.tex}
+
+
+Table~\ref{tab:forecast_significance} reports
+HAC-adjusted tests comparing the squared volatility
+forecast errors of the historical, EWMA, and
+GARCH(1,1) estimators. Positive loss differentials
+indicate that the second estimator in each
+comparison achieves lower average squared
+forecast errors.
+
+During the historical period, both EWMA and
+GARCH demonstrate statistically significant
+improvements over the historical volatility
+estimator when considered individually.
+
+The historical-minus-GARCH loss differential
+is 0.000224, with a HAC $t$-statistic of 2.064
+and a two-sided $p$-value of 0.0391.
+The historical-minus-EWMA differential is
+slightly larger at 0.000233, with a
+$t$-statistic of 2.504 and a $p$-value
+of 0.0123.
+
+These results provide evidence that both
+conditional volatility approaches improve
+squared-error forecast accuracy relative
+to the equally weighted historical estimator
+during the 1929--2011 sample.
+
+However, the difference between EWMA and
+GARCH is not statistically significant.
+The GARCH-minus-EWMA loss differential is
+only 0.000009, with a $t$-statistic of
+0.279 and a $p$-value of 0.7805.
+Consequently, we cannot establish that
+either method provides more accurate
+volatility forecasts than the other.
+
+During the 2012--2025 extension, neither
+EWMA nor GARCH produces a statistically
+significant reduction in squared forecast
+loss relative to the historical estimator.
+The historical-minus-EWMA comparison
+has a $p$-value of 0.3734, while the
+historical-minus-GARCH comparison has
+a $p$-value of 0.3132.
+
+Similarly, the difference between GARCH
+and EWMA remains statistically
+insignificant ($p=0.5738$).
+
+The shorter extension sample contains
+168 monthly observations, compared with
+989 in the historical period. This
+difference in sample size may reduce
+statistical power, making smaller
+forecasting improvements more difficult
+to detect. Nevertheless, differences
+in statistical significance across
+samples do not by themselves establish
+a structural change in forecasting
+performance.
+
+Because the three baseline pairwise tests
+within each sample are related, their
+unadjusted $p$-values should be interpreted
+with appropriate caution. Applying the
+Holm correction to the three historical
+comparisons retains significance for
+historical versus EWMA, but not for
+historical versus GARCH.
+
+Overall, the results suggest that EWMA
+provides a statistically supported
+improvement over the historical estimator
+in the historical sample, while GARCH
+also exhibits an improvement under
+unadjusted inference. Neither method
+demonstrates a statistically established
+forecasting advantage over the other.
+
+Importantly, these tests concern
+volatility forecast accuracy rather
+than portfolio performance. Although
+EWMA achieves the highest realized
+Sharpe ratio in both periods, the
+forecast-loss tests do not establish
+that its investment performance is
+statistically superior.
+
+
+
+\subsection{Robustness Analysis: Innovation Distributions and Estimation Windows}
+\label{subsec:garch_robustness}
+
+To assess whether our GARCH results depend on the choice
+of innovation distribution or estimation-window length,
+we evaluate eight GARCH(1,1) specifications combining
+Gaussian and Student-$t$ innovations with rolling windows
+of 252, 504, 756, and 1,260 daily observations.
+
+Each specification is estimated using the same reconstructed
+daily WML returns and generates a 21-trading-day-ahead
+volatility forecast at each month-end. These forecasts
+determine next-month portfolio exposure according to
+the volatility-targeting rule established in
+Section 3.
+
+The robustness analysis covers May 1931--December 2011
+(968 months) and January 2012--December 2025
+(168 months). The historical sample begins later than
+the main comparison in Section 4.2 because the
+1,260-day specification requires a longer initial
+estimation period. All eight specifications are
+therefore evaluated over identical monthly observations
+within each period.
+
+The Gaussian GARCH(1,1) model estimated using
+756 daily observations serves as our benchmark.
+Its forecasts exactly reproduce those of the
+corresponding baseline specification, confirming
+consistency between the main analysis and the
+robustness implementation.
+
+
+\subsubsection{Volatility Forecast Accuracy}
+
+Table~\ref{tab:garch_robustness_accuracy} compares forecast
+accuracy using mean absolute error (MAE), root mean squared
+error (RMSE), and the correlation between forecast and realized
+volatility. Realized monthly volatility is measured as the square
+root of the sum of squared daily WML returns within the month.
+
+\begin{table}[htbp]
+\centering
+\caption{GARCH Robustness: Volatility Forecast Accuracy}
+\label{tab:garch_robustness_accuracy}
+\small
+\begin{tabular}{lrrrrrr}
+\hline
+& \multicolumn{3}{c}{1931--2011}
+& \multicolumn{3}{c}{2012--2025} \\
+\cline{2-4}\cline{5-7}
+Specification & MAE & RMSE & Corr.
+              & MAE & RMSE & Corr. \\
+\hline
+Gaussian 252  & 0.01576 & 0.02686 & 0.773
+              & 0.02240 & 0.03172 & 0.680 \\
+Gaussian 504  & 0.01528 & 0.02560 & 0.788
+              & 0.02032 & 0.02907 & 0.714 \\
+Gaussian 756  & 0.01518 & \textbf{0.02485} & 0.800
+              & 0.02014 & 0.02909 & 0.713 \\
+Gaussian 1260 & \textbf{0.01506} & 0.02496 & 0.797
+              & 0.02062 & 0.02928 & 0.710 \\
+Student-$t$ 252  & 0.01601 & 0.02865 & 0.754
+                 & 0.02142 & 0.03046 & 0.697 \\
+Student-$t$ 504  & 0.01566 & 0.02670 & 0.770
+                 & 0.02027 & 0.02903 & 0.711 \\
+Student-$t$ 756  & 0.01535 & 0.02528 & 0.791
+                 & \textbf{0.02011} & 0.02896 & 0.712 \\
+Student-$t$ 1260 & 0.01522 & 0.02511 & 0.794
+                 & 0.02032 & \textbf{0.02874} & 0.717 \\
+\hline
+\end{tabular}
+\begin{flushleft}
+\footnotesize
+\textit{Notes:} Forecasts are generated at month-end and compared
+with realized volatility in the subsequent month. Lower MAE and
+RMSE indicate greater forecast accuracy. Corr. denotes the
+forecast--realized volatility correlation.
+\end{flushleft}
+\end{table}
+
+In the historical sample, the Gaussian GARCH model estimated over
+756 observations achieves the lowest RMSE (0.02485) and highest
+forecast--realized volatility correlation (0.800). The 1,260-day
+Gaussian specification achieves a slightly lower MAE, suggesting
+that the preferred estimation window depends on the loss function.
+More generally, longer estimation windows improve forecast
+accuracy relative to the shortest windows, while Student-$t$
+innovations do not consistently improve on Gaussian innovations.
+
+The extension sample presents a somewhat different pattern.
+Student-$t$ innovations become more competitive: the 756-day
+Student-$t$ model achieves the lowest MAE (0.02011), while the
+1,260-day Student-$t$ model achieves the lowest RMSE (0.02874).
+However, the improvements relative to the Gaussian 756-day
+benchmark are small.
+
+To assess statistical significance, we calculate the monthly
+squared-error loss differential
+
+\begin{equation}
+    d_t =
+    \left(\widehat{\sigma}^{G756}_t-\sigma_t\right)^2
+    -
+    \left(\widehat{\sigma}^{j}_t-\sigma_t\right)^2,
+\end{equation}
+
+where $G756$ denotes the Gaussian 756-day benchmark and $j$
+denotes an alternative specification. Positive values indicate
+lower squared forecast error for the alternative. We test whether
+the mean differential differs from zero using a constant-only
+regression with heteroskedasticity- and autocorrelation-consistent
+(HAC) standard errors and three lags.
+
+\begin{table}[htbp]
+\centering
+\caption{HAC Tests of Forecast-Loss Differences}
+\label{tab:garch_robustness_hac}
+\small
+\begin{tabular}{lrrrr}
+\hline
+& \multicolumn{2}{c}{1931--2011}
+& \multicolumn{2}{c}{2012--2025} \\
+\cline{2-3}\cline{4-5}
+Alternative & $t$-stat. & $p$-value
+            & $t$-stat. & $p$-value \\
+\hline
+Gaussian 252  & -2.084 & 0.037 & -1.892 & 0.059 \\
+Gaussian 504  & -1.968 & 0.049 &  0.042 & 0.967 \\
+Gaussian 1260 & -0.623 & 0.533 & -0.410 & 0.682 \\
+Student-$t$ 252  & -1.830 & 0.067 & -1.482 & 0.138 \\
+Student-$t$ 504  & -2.187 & 0.029 &  0.133 & 0.894 \\
+Student-$t$ 756  & -1.086 & 0.277 &  0.393 & 0.694 \\
+Student-$t$ 1260 & -0.871 & 0.384 &  0.719 & 0.472 \\
+\hline
+\end{tabular}
+\begin{flushleft}
+\footnotesize
+\textit{Notes:} Tests compare each alternative against Gaussian
+GARCH(1,1) estimated using 756 observations. Positive test
+statistics favor the alternative. Two-sided $p$-values use
+HAC standard errors with three lags. The seven comparisons
+within each sample are not independent.
+\end{flushleft}
+\end{table}
+
+
+In the historical sample, the Gaussian 756-day
+benchmark achieves lower mean squared forecast error
+than all seven alternatives. Three comparisons are
+individually significant at the 5\% level:
+Gaussian 252, Gaussian 504, and Student-$t$ 504.
+However, none remains significant after applying
+the Holm correction for multiple comparisons.
+Thus, although the benchmark performs favorably,
+the evidence is insufficient to establish its
+superiority across the full set of specifications
+after accounting for multiple testing.
+
+In the extension sample, several Student-$t$
+specifications achieve slightly lower forecast
+errors than the Gaussian benchmark, but none
+of the differences is statistically significant.
+These findings suggest that the relative
+forecasting performance of alternative GARCH
+specifications is sensitive to the sample period
+and evaluation criterion. They do not, however,
+provide compelling evidence that changing the
+innovation distribution or estimation window
+consistently improves volatility forecasting.
+
+
+\subsubsection{Portfolio Performance and Economic Implications}
+
+Table~\ref{tab:garch_robustness_performance} reports the
+annualized Sharpe ratio, annualized realized volatility, and
+average portfolio exposure for each specification.
+
+\begin{table}[htbp]
+\centering
+\caption{GARCH Robustness: Volatility-Managed Momentum Performance}
+\label{tab:garch_robustness_performance}
+\small
+\begin{tabular}{lrrrrrr}
+\hline
+& \multicolumn{3}{c}{1931--2011}
+& \multicolumn{3}{c}{2012--2025} \\
+\cline{2-4}\cline{5-7}
+Specification & Sharpe & Vol. & Exposure
+              & Sharpe & Vol. & Exposure \\
+\hline
+Gaussian 252  & 0.978 & 17.33\% & 0.927
+              & \textbf{0.377} & 12.90\% & 0.535 \\
+Gaussian 504  & 0.943 & 16.93\% & 0.901
+              & 0.302 & 13.08\% & 0.530 \\
+Gaussian 756  & 0.938 & 16.64\% & 0.889
+              & 0.318 & 12.99\% & 0.530 \\
+Gaussian 1260 & 0.953 & 16.31\% & 0.879
+              & 0.315 & 12.80\% & 0.525 \\
+Student-$t$ 252  & \textbf{0.983} & 17.34\% & 0.929
+                 & 0.372 & 12.95\% & 0.538 \\
+Student-$t$ 504  & 0.934 & 16.94\% & 0.903
+                 & 0.313 & 13.13\% & 0.535 \\
+Student-$t$ 756  & 0.927 & 16.66\% & 0.889
+                 & 0.318 & 13.08\% & 0.535 \\
+Student-$t$ 1260 & 0.939 & 16.33\% & 0.876
+                 & 0.314 & 12.88\% & 0.530 \\
+\hline
+\end{tabular}
+\begin{flushleft}
+\footnotesize
+\textit{Notes:} Strategies target 12\% annualized volatility
+using month-end forecasts and next-month WML returns.
+Sharpe ratios are calculated using zero as the risk-free rate.
+Exposure denotes the average portfolio weight. No leverage
+cap or transaction costs are imposed.
+\end{flushleft}
+\end{table}
+
+An important finding is that superior volatility forecasting does
+not necessarily translate into superior risk-adjusted portfolio
+performance. In the historical sample, the Gaussian 756-day
+specification delivers the lowest forecast RMSE, but its Sharpe
+ratio of 0.938 is below that of the Gaussian 252-day model (0.978)
+and the Student-$t$ 252-day model (0.983). Similarly, in the
+extension sample, Gaussian 252 days generates the highest Sharpe
+ratio (0.377), despite having the highest forecast RMSE among
+the eight specifications.
+
+One possible explanation is that shorter estimation windows adjust more rapidly to changes in market conditions, thereby altering exposure during periods that are particularly important for realized portfolio returns. However, this mechanism has not been separately identified. Furthermore, the observed Sharpe-ratio differences among the eight alternative GARCH specifications have not been subjected to formal statistical tests. The paired block-bootstrap analysis in Section 4.9 evaluates the baseline historical volatility, EWMA, and GARCH strategies, but does not extend to comparisons among the alternative GARCH estimation windows and innovation distributions considered here. Accordingly, the specification-level performance rankings should be interpreted as descriptive rather than evidence of statistically significant differences.
+
+Furthermore, the strategies do not achieve identical realized
+volatility or average exposure. In the historical sample,
+annualized realized volatility ranges from approximately 16.3\%
+to 17.3\%, exceeding the nominal 12\% target. In the extension
+sample, realized volatility is closer to the target, ranging
+from approximately 12.8\% to 13.1\%. These differences should
+be considered when interpreting the economic performance
+comparisons.
+
+
+Overall, the robustness analysis indicates that
+the Gaussian 756-day specification provides a
+reasonable forecasting benchmark, but its
+performance is not uniformly superior across
+all evaluation criteria. More importantly,
+the results reinforce the central finding of
+our GARCH extension: improvements in statistical
+volatility forecast accuracy do not necessarily
+translate into improvements in risk-adjusted
+investment performance. The economic value of
+a forecasting model depends not only on the
+magnitude of its prediction errors, but also
+on how those errors affect portfolio exposure
+and subsequent realized returns.
+
+
+
+\subsection{Robustness Analysis: EWMA Decay Factor}
+
+To evaluate whether the performance of EWMA-based
+volatility management depends on the choice of decay
+factor, we consider four specifications with
+$\lambda \in \{0.90, 0.94, 0.97, 0.99\}$.
+
+The baseline value of $\lambda=0.94$ follows the
+conventional daily RiskMetrics parameterization.
+Lower decay factors assign greater weight to recent
+squared returns and therefore allow estimated
+volatility to respond more rapidly to new shocks.
+Higher decay factors generate smoother, more
+persistent volatility estimates.
+
+All four specifications use the same reconstructed
+daily momentum returns, 126-observation
+initialization procedure, and 21-trading-day
+forecast horizon. Comparisons are conducted over
+identical monthly observations within each sample.
+
+\begin{table}[htbp]
+\centering
+\caption{EWMA Robustness: Forecast Accuracy and
+Portfolio Performance}
+\label{tab:ewma_robustness}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Decay Factor & Sharpe & Vol. (\%) & RMSE
+& Exposure \\
+\midrule
+\multicolumn{5}{l}{\textit{August 1929--December 2011}} \\
+$\lambda=0.90$ & 1.010 & 18.44 & 0.02483 & 1.016 \\
+$\lambda=0.94$ & 1.017 & 17.76 & 0.02488 & 0.979 \\
+$\lambda=0.97$ & 1.004 & 17.22 & 0.02570 & 0.935 \\
+$\lambda=0.99$ & 0.949 & 16.69 & 0.02853 & 0.869 \\
+\midrule
+\multicolumn{5}{l}{\textit{January 2012--December 2025}} \\
+$\lambda=0.90$ & 0.336 & 14.06 & 0.02986 & 0.587 \\
+$\lambda=0.94$ & 0.343 & 13.30 & 0.02945 & 0.562 \\
+$\lambda=0.97$ & 0.342 & 12.65 & 0.02926 & 0.536 \\
+$\lambda=0.99$ & 0.327 & 12.39 & 0.03159 & 0.504 \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.2cm}
+\begin{minipage}{0.95\textwidth}
+\footnotesize
+\textit{Notes:} All strategies target 12\% annualized
+volatility. Forecast RMSE is calculated against
+the following month's realized volatility.
+Volatility denotes annualized realized portfolio
+volatility, and exposure is the average portfolio
+multiplier. Returns exclude transaction and
+financing costs.
+\end{minipage}
+\end{table}
+
+Table~\ref{tab:ewma_robustness} reports the
+forecast accuracy and portfolio performance
+of the four EWMA specifications.
+
+During the historical period, the baseline
+$\lambda=0.94$ specification achieves the
+highest Sharpe ratio of 1.017. The nearby
+specifications with $\lambda=0.90$ and
+$\lambda=0.97$ produce Sharpe ratios of
+1.010 and 1.004, respectively, indicating
+that the observed risk-adjusted performance
+is relatively stable across moderate
+changes in the decay factor.
+
+The $\lambda=0.90$ specification achieves
+the lowest historical forecast RMSE of
+0.02483, marginally outperforming the
+baseline value of 0.02488. However, the
+difference is economically small and
+does not translate into a higher
+realized Sharpe ratio.
+
+Increasing the decay factor to 0.99
+produces a noticeably higher forecast
+RMSE of 0.02853 and reduces the Sharpe
+ratio to 0.949. This suggests that
+placing excessive weight on older
+observations may reduce the estimator's
+responsiveness to changes in momentum
+volatility.
+
+In the extension sample, the baseline
+specification again achieves the highest
+Sharpe ratio of 0.343, although the
+$\lambda=0.97$ specification performs
+almost identically at 0.342.
+
+The lowest extension-period forecast
+RMSE is obtained with $\lambda=0.97$
+(0.02926), compared with 0.02945
+for the baseline specification.
+As in the historical period, the
+specification with $\lambda=0.99$
+produces the lowest Sharpe ratio
+among the four alternatives.
+
+These findings indicate that the
+baseline EWMA strategy does not
+depend on a narrowly selected
+decay parameter. Its performance
+remains relatively stable for
+$\lambda$ values between 0.90
+and 0.97, while the slowest-decaying
+specification performs less favorably.
+
+Nevertheless, the relative rankings
+of the specifications are descriptive
+and do not establish statistically
+significant differences in portfolio
+performance.
+
+
+We further compare squared volatility forecast
+losses using HAC-adjusted tests with three
+monthly lags, taking $\lambda=0.94$ as the
+benchmark.
+
+During the historical sample, neither
+$\lambda=0.90$ ($p=0.9057$) nor
+$\lambda=0.97$ ($p=0.1487$) differs
+significantly from the baseline.
+However, the $\lambda=0.99$ specification
+produces significantly higher squared
+forecast loss ($p=0.0079$).
+This result remains significant after
+applying the Holm correction across the
+three alternative decay factors.
+
+In the extension sample, none of the
+alternative specifications differs
+significantly from the baseline,
+with $p$-values ranging from 0.3675
+to 0.8158.
+
+Taken together, these results support
+the use of $\lambda=0.94$ as a reasonable
+baseline rather than establishing it
+as a universally optimal parameter.
+The evidence favors moderate decay
+factors over the slowest-decaying
+specification in the historical sample,
+but does not establish a statistically
+superior decay factor in the
+post-2011 period.
+
+\subsection{Transaction-Cost-Adjusted Performance}
+\label{sec:transaction_cost_results}
+Table~\ref{tab:transaction_costs} presents the performance of the stock-level, self-financing account with a proportional trading cost of 10 basis points and no financing charge. Unlike the gross results in Table~2, these figures include costs associated with trading individual stock positions. The corresponding zero-cost simulations reproduce the baseline gross-return results within numerical precision. All four strategies remain evaluable over the 989 historical and 168 extension months, and the transaction-cost accounting identities pass the implementation checks.
+
+\begin{table}[htbp]
+\centering
+\caption{Momentum performance after 10-basis-point stock-level transaction costs}
+\label{tab:transaction_costs}
+\small
+\begin{tabular}{llrrrr}
+\hline
+Sample & Strategy & Mean (\%) & Vol. (\%) & Sharpe & Turnover \\
+\hline
+1929--2011 & Unmanaged & 12.241 & 27.619 & 0.443 & 1.541 \\
+ & Historical & 15.000 & 17.254 & 0.869 & 1.375 \\
+ & EWMA & 16.149 & 17.689 & 0.913 & 1.561 \\
+ & GARCH & 14.101 & 16.618 & 0.849 & 1.369 \\
+\hline
+2012--2025 & Unmanaged & 2.838 & 27.117 & 0.105 & 1.490 \\
+ & Historical & 3.267 & 12.458 & 0.262 & 0.775 \\
+ & EWMA & 3.477 & 13.285 & 0.262 & 0.899 \\
+ & GARCH & 3.127 & 12.977 & 0.241 & 0.831 \\
+\hline
+\end{tabular}
+\begin{minipage}{0.94\linewidth}\footnotesize\emph{Notes:} Annualized arithmetic mean returns and volatility; Sharpe ratios use a zero risk-free benchmark. Turnover is average monthly sum of absolute stock-weight trades. Strategies are uncapped and assume zero financing spread. Figures are rounded from the validated leverage-financing experiment.\end{minipage}
+\end{table}
+
+Transaction costs reduce annualized mean returns, but they do not eliminate the historical risk-adjusted advantage of volatility management. Relative to the corresponding zero-cost simulations, the 10-basis-point assumption reduces historical annualized mean returns by approximately 1.86 percentage points for unmanaged momentum, 1.68 for historical volatility targeting, 1.91 for EWMA, and 1.67 for GARCH. In the extension sample, the corresponding reductions are approximately 1.79, 0.93, 1.08, and 1.00 percentage points. The lower modern trading-cost drag for the managed strategies is consistent with their lower average exposure and stock-level turnover. These comparisons do not establish historical execution feasibility: realized costs would vary with liquidity, market conditions, and short-selling requirements.
+
+\subsection{Leverage Caps and Financing Costs}
+\label{sec:leverage_results}
+Table~\ref{tab:leverage_caps} compares uncapped volatility management with a one-times exposure cap, holding stock-level transaction costs at 10 basis points and the financing spread at zero. In the historical sample, the cap binds in approximately 40.4\%, 45.0\%, and 39.8\% of months for the historical, EWMA, and GARCH strategies, respectively. It reduces their Sharpe ratios from 0.869 to 0.779, 0.913 to 0.830, and 0.849 to 0.804. Thus, part of the historical performance improvement relies on the ability to scale positions above one unit of exposure. Nevertheless, even with the cap, all three strategies retain higher observed Sharpe ratios than unmanaged momentum (0.443).
+
+\begin{table}[htbp]
+\centering
+\caption{Sensitivity of net Sharpe ratios to a one-times leverage cap}
+\label{tab:leverage_caps}
+\small
+\begin{tabular}{llrrr}
+\hline
+Sample & Strategy & Uncapped & Cap at 1$\times$ & Cap binding (\%) \\
+\hline
+1929--2011 & Historical & 0.869 & 0.779 & 40.4 \\
+ & EWMA & 0.913 & 0.830 & 45.0 \\
+ & GARCH & 0.849 & 0.804 & 39.8 \\
+\hline
+2012--2025 & Historical & 0.262 & 0.262 & 0.6 \\
+ & EWMA & 0.262 & 0.261 & 6.5 \\
+ & GARCH & 0.241 & 0.240 & 1.8 \\
+\hline
+\end{tabular}
+\begin{minipage}{0.94\linewidth}\footnotesize\emph{Notes:} All returns incorporate 10-basis-point stock trading costs and assume zero financing spread. Binding fractions measure the proportion of months in which unconstrained exposure exceeds one.\end{minipage}
+\end{table}
+
+The extension sample displays a different pattern. Uncapped average exposure is only about 0.522 for historical volatility targeting, 0.562 for EWMA, and 0.530 for GARCH. Consequently, the one-times cap binds in fewer than 7\% of months for any managed strategy, and the resulting Sharpe changes are negligible. Raising the cap to 1.5 or 2 times likewise has little effect in the modern sample. The contrast suggests that leverage flexibility contributes more to historical managed-momentum performance than to the more recent results.
+
+Financing costs further reduce historical performance, but their effect is smaller than that of a strict one-times cap. At 300 annualized basis points on exposure above one, the historical uncapped Sharpe ratios fall from 0.869 to 0.850 (historical volatility), 0.913 to 0.885 (EWMA), and 0.849 to 0.833 (GARCH). The modern Sharpe ratios change very little under the same assumption because leverage above one is uncommon. These findings are conditional on the simplified financing convention in Equation~\eqref{eq:financing}; they do not include stock-borrow fees or other costs of maintaining a short leg.
+
+\subsection{Bootstrap Inference and Performance Robustness}
+\label{sec:bootstrap_results}
+Table~\ref{tab:bootstrap_sharpe} reports the primary paired six-month circular block-bootstrap results for net returns with 10-basis-point transaction costs, no leverage cap, and zero financing spread. In the historical sample, all three volatility-managed strategies have significantly higher Sharpe ratios than unmanaged momentum: estimated differences range from 0.405 to 0.470, with all 95\% percentile confidence intervals strictly above zero. In the 2012--2025 extension, the corresponding estimated differences remain positive, approximately 0.136--0.158, but every confidence interval includes zero. Thus, the shorter modern sample provides insufficient evidence at the conventional 5\% level to establish a nonzero Sharpe improvement; this does not establish that the true benefit has disappeared.
+
+\begin{table}[htbp]
+\centering
+\caption{Paired block-bootstrap differences in net annualized Sharpe ratios}
+\label{tab:bootstrap_sharpe}
+\small
+\begin{tabular}{llrrr}
+\hline
+Sample & Comparison ($A-B$) & $\Delta SR$ & 95\% percentile CI & Approx. $p$ \\
+\hline
+1929--2011 & Historical -- Unmanaged & 0.426 & [0.246, 0.593] & 0.0002 \\
+ & EWMA -- Unmanaged & 0.470 & [0.277, 0.648] & 0.0002 \\
+ & GARCH -- Unmanaged & 0.405 & [0.221, 0.572] & 0.0002 \\
+ & EWMA -- Historical & 0.044 & [-0.012, 0.097] & 0.1174 \\
+ & GARCH -- Historical & -0.021 & [-0.078, 0.045] & 0.5003 \\
+ & EWMA -- GARCH & 0.064 & [0.019, 0.110] & 0.0052 \\
+\hline
+2012--2025 & Historical -- Unmanaged & 0.158 & [-0.028, 0.340] & 0.1004 \\
+ & EWMA -- Unmanaged & 0.157 & [-0.040, 0.317] & 0.0896 \\
+ & GARCH -- Unmanaged & 0.136 & [-0.053, 0.279] & 0.1066 \\
+ & EWMA -- Historical & -0.001 & [-0.108, 0.109] & 0.9930 \\
+ & GARCH -- Historical & -0.021 & [-0.138, 0.089] & 0.7081 \\
+ & EWMA -- GARCH & 0.021 & [-0.021, 0.065] & 0.3435 \\
+\hline
+\end{tabular}
+\begin{minipage}{0.94\linewidth}\footnotesize\emph{Notes:} 5,000 paired circular block-bootstrap resamples with six-month blocks. The same monthly indices are applied to all strategies. Approximate two-sided $p$-values are based on centered bootstrap differences. Historical and extension samples contain 989 and 168 monthly observations, respectively.\end{minipage}
+\end{table}
+
+The historical EWMA--GARCH Sharpe difference is positive and its primary confidence interval excludes zero; the approximate $p$-value of 0.0052 is also below the Bonferroni threshold $0.05/6\approx0.0083$. However, this apparent advantage is not robust to imposing a one-times leverage cap. Neither EWMA nor GARCH exhibits a consistently significant Sharpe improvement over the historical volatility estimator. These results reinforce the distinction between improving volatility forecast accuracy and improving realized risk-adjusted portfolio performance.
+
+Sensitivity tests use three-, six-, and twelve-month blocks and repeat the comparisons under a one-times leverage cap. In the historical sample, each managed strategy outperforms unmanaged momentum at the 5\% level in all six configurations, and all 18 corresponding comparisons survive the within-configuration Bonferroni threshold. The historical EWMA--historical comparison has percentile intervals excluding zero in three of six configurations, but none of its approximate $p$-values survives Bonferroni adjustment. EWMA--GARCH has intervals excluding zero in three of six configurations and Bonferroni-adjusted significance in two; all three significant percentile intervals occur without the leverage cap. GARCH--historical is not significant in any configuration. In the extension sample, none of the six pairwise comparisons has a 95\% percentile interval excluding zero in any of the six configurations. These are sensitivity checks on dependent estimates, not independent experimental replications. Moreover, confidence intervals and centered-bootstrap $p$-values can yield different decisions near the 5\% threshold.
+\section{Robustness and Limitations}
+\label{sec:limitations}
+
+
+Our analysis provides evidence that volatility management
+improves the risk-adjusted performance of momentum
+strategies and that both EWMA and GARCH(1,1) can
+improve volatility forecast accuracy relative to the
+historical estimator. Nevertheless, several methodological
+considerations affect the interpretation and
+generalizability of these findings.
+
+\subsection{Momentum Portfolio Reconstruction}
+
+Unlike studies relying exclusively on a published
+momentum factor, we reconstruct the WML portfolio
+using CRSP stock-level data. This approach allows
+us to evaluate volatility forecasts on a common
+underlying return series, but introduces additional
+data-processing assumptions.
+
+In particular, historical security records can
+contain missing returns, incomplete delisting
+payoffs, and gaps in price observations.
+Our primary daily reconstruction retains available
+numeric return components while assigning zero
+increments to certain unresolved observations.
+These assumptions are explicitly identified
+within the reconstruction pipeline and should
+not be interpreted as observed market returns.
+
+Although our reconstructed momentum series has
+been compared with the Kenneth French momentum
+factor as an external validation benchmark,
+close agreement between the series does not
+eliminate uncertainty surrounding individual
+missing observations or terminal payoffs.
+
+Additionally, our reconstruction uses a
+separately identified CRSP CIZ eligibility
+screen for recent observations where legacy
+share and exchange classifications are
+unavailable. Differences between the CIZ
+screen and historical classifications may
+affect the composition of the momentum
+portfolio in the final part of the sample.
+
+
+\subsection{Volatility Forecast Specification}
+
+Our analysis compares three volatility forecasting
+approaches with different assumptions and levels
+of complexity. The historical estimator assigns
+equal weight to the preceding 126 daily squared
+returns, EWMA applies exponentially declining
+weights with a baseline decay factor of
+$\lambda=0.94$, and GARCH(1,1) models conditional
+variance dynamics using parameters estimated
+over a rolling window of 756 daily observations.
+
+These specifications provide a consistent
+framework for evaluating alternative volatility
+forecasts, but their baseline parameters were
+not optimized separately for each evaluation
+period. The EWMA decay factor follows the
+conventional daily RiskMetrics parameterization,
+while the historical and GARCH estimation
+windows reflect our chosen benchmark designs.
+
+All three methods forecast volatility over an
+approximate 21-trading-day horizon, whereas
+realized volatility is calculated using the
+actual number of trading days in each calendar
+month. Consequently, part of the measured
+forecast error may reflect differences between
+the fixed forecasting horizon and the realized
+evaluation period rather than deficiencies
+in the underlying volatility model.
+
+The EWMA specification assumes a constant
+decay factor and does not explicitly model
+a long-run variance level. Its responsiveness
+to new volatility shocks depends on the
+chosen value of $\lambda$. Our robustness
+analysis evaluates decay factors of
+0.90, 0.94, 0.97, and 0.99, finding
+relatively stable portfolio Sharpe ratios
+for the first three specifications but
+weaker historical forecast accuracy
+when $\lambda=0.99$.
+
+Our baseline GARCH specification assumes
+conditionally Gaussian innovations and a
+zero conditional mean. The GARCH robustness
+analysis relaxes the Gaussian assumption
+by considering Student-$t$ innovations
+and alternative rolling estimation windows
+of 252, 504, 756, and 1,260 daily observations.
+
+However, we do not investigate asymmetric
+volatility models such as GJR-GARCH or
+EGARCH, which could potentially capture
+different responses to positive and negative
+momentum shocks. We also retain a zero
+conditional mean across all GARCH
+specifications.
+
+Finally, the three estimators differ in
+their computational requirements. EWMA
+updates recursively without repeated
+parameter estimation, while our GARCH
+implementation requires rolling
+maximum-likelihood estimation. Although
+this distinction may matter operationally,
+we do not formally quantify computational
+costs or implementation efficiency.
+
+These modeling choices and restrictions
+remain potential directions for
+future research.
+
+
+\subsection{Trading Frictions and Leverage}
+
+Our net-return experiments account for proportional stock-level transaction costs and stylized financing charges on exposure above one, and impose alternative exposure caps. The historical advantage of volatility management persists after 10-basis-point stock trading costs and under a one-times leverage cap, although performance declines relative to the gross unconstrained benchmark. The extension sample is less sensitive to leverage and financing because managed exposures average only about 0.52--0.56. These exercises do not capture time-varying spreads, market impact, borrow availability or fees, margin and collateral conventions, tax effects, or all historical execution constraints. The net results are therefore implementation sensitivities rather than fully investable backtests.
+
+
+
+\subsection{Statistical Inference and Sample Dependence}
+
+Several limitations should be considered when
+interpreting the statistical significance of
+our results.
+
+First, the historical and extension samples
+differ considerably in length. The main
+comparison contains 989 historical monthly
+observations and 168 extension observations,
+while the GARCH robustness analysis uses
+968 historical observations to accommodate
+the longest estimation window.
+
+The shorter extension period provides
+less information for detecting differences
+in forecast accuracy, potentially reducing
+the statistical power of our tests.
+Consequently, the absence of statistically
+significant forecasting improvements
+after 2011 should not be interpreted
+as evidence that competing models have
+identical predictive performance.
+
+Second, our historical analysis is not
+a genuinely independent post-publication
+test of the original momentum-management
+hypothesis. Although the 2012--2025
+extension provides a more recent
+evaluation, the two periods differ
+in market conditions, momentum returns,
+and average portfolio exposure.
+
+Differences in statistical significance
+across samples do not, by themselves,
+establish a structural change in
+forecasting performance.
+
+Third, our HAC-adjusted tests evaluate
+differences in mean squared volatility
+forecast errors rather than differences
+in realized portfolio performance.
+The choice of squared-error loss
+provides a consistent statistical
+criterion, but alternative loss
+functions could yield different
+rankings of forecasting models.
+
+Fourth, our analysis involves multiple
+comparisons. The baseline analysis
+compares three forecasting methods,
+while the GARCH and EWMA robustness
+exercises evaluate seven and three
+alternative specifications, respectively.
+
+We therefore distinguish unadjusted
+pairwise significance from conclusions
+that remain significant after applying
+the Holm correction within each
+comparison family. These adjustments
+reduce the risk of false discoveries
+but may also reduce statistical power.
+
+Formal paired circular moving-block bootstrap comparisons now assess differences in realized net Sharpe ratios. These tests condition on the observed strategy return series and do not re-estimate forecasting models or reconstruct stock portfolios within bootstrap samples. Results can depend on block length and exposure constraints; percentile confidence intervals and centered-bootstrap p-values may also differ at conventional significance thresholds. We examine multiple comparisons using a within-family Bonferroni correction. The shorter extension sample limits statistical precision, and a lack of significance is not evidence of equal underlying performance. The historical sample is not a fully independent test of the original hypothesis.
+
+
+
+\section{Conclusion}
+
+This paper replicates and extends the
+volatility-managed momentum framework
+of Barroso and Santa-Clara (2015),
+with particular emphasis on the
+economic and statistical consequences
+of alternative volatility forecasting
+methods.
+
+Our replication confirms the
+importance of volatility management
+for momentum strategies. During the
+historical sample, scaling momentum
+exposure using estimated volatility
+substantially increases realized
+Sharpe ratios and reduces maximum
+drawdowns relative to the unmanaged
+portfolio. These benefits persist
+in the 2012--2025 extension,
+although the underlying momentum
+premium and the returns of all
+strategies are considerably weaker.
+
+Our methodological extension
+compares a 126-day historical
+volatility estimator with EWMA
+and GARCH(1,1). Both conditional
+volatility approaches generally
+improve forecast accuracy relative
+to the historical benchmark.
+EWMA produces the lowest forecast
+RMSE during the historical period,
+whereas GARCH achieves a marginally
+lower RMSE in the extension period.
+
+Statistical tests provide evidence
+that EWMA improves squared-error
+forecast accuracy relative to the
+historical estimator during the
+historical sample, including after
+adjusting for the three baseline
+pairwise comparisons. GARCH also
+demonstrates an improvement under
+unadjusted inference. However,
+neither estimator establishes a
+statistically significant forecasting
+advantage over the other, and
+forecasting improvements are not
+statistically significant in the
+extension sample.
+
+From an investment perspective,
+EWMA achieves the highest observed
+Sharpe ratio among the evaluated
+strategies in both periods. Its
+performance is also relatively
+stable across decay factors
+between 0.90 and 0.97.
+
+These findings suggest that the
+benefits of volatility-managed
+momentum are robust to several
+reasonable choices of volatility
+estimator. They also highlight
+an important distinction between
+statistical forecasting accuracy
+and realized investment
+performance: more complex models
+do not necessarily generate
+economically superior portfolios.
+
+Our implementation extensions show that the historical Sharpe advantage survives 10-basis-point stock-level transaction costs and a one-times leverage cap, although both assumptions reduce realized performance. Financing charges on leverage above one have a smaller modeled effect, particularly after 2011 when average managed exposure is well below one. Paired block-bootstrap tests find a statistically supported historical net Sharpe improvement for all three managed strategies across block lengths and leverage assumptions. In contrast, none of the managed-versus-unmanaged improvements is statistically significant in the 2012--2025 sample. Nor is there a robust, implementation-independent Sharpe advantage of EWMA or GARCH over the simple historical estimator. These results suggest that the principal contribution of volatility management lies in scaling momentum risk rather than in selecting a uniquely superior forecasting model.
+
+Overall, our analysis reinforces
+the relevance of volatility
+management for momentum investing
+while demonstrating that a
+computationally simple EWMA
+approach can remain competitive
+with more sophisticated
+GARCH-based forecasts.
+
+\bibliographystyle{apalike}
+\bibliography{references}
+
+\end{document}
